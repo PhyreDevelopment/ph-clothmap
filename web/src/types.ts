@@ -5,9 +5,10 @@ export interface ClothMap {
   bares: Record<Gender, number[]>;
   innershirts: Record<Gender, number[]>;
   gloves: Record<Gender, Record<number, number>>;
+  shirts: Record<Gender, Record<number, number>>;
   jacketToArms: Record<Gender, Record<number, number>>;
   tops: Record<Gender, Record<number, number>>;
   innershirtToFallbackTop: Record<Gender, Record<number, number>>;
 }
 
-export type Tab = 'gloves' | 'jackets' | 'tops' | 'innershirts';
+export type Tab = 'gloves' | 'shirts' | 'jackets' | 'tops' | 'innershirts';

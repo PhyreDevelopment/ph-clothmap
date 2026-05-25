@@ -15,6 +15,7 @@ local function loadMap()
     map.bares = map.bares or { male = {}, female = {} }
     map.innershirts = map.innershirts or { male = {}, female = {} }
     map.gloves = map.gloves or { male = {}, female = {} }
+    map.shirts = map.shirts or { male = {}, female = {} }
     map.jacketToArms = map.jacketToArms or { male = {}, female = {} }
     map.tops = map.tops or { male = {}, female = {} }
     map.innershirtToFallbackTop = map.innershirtToFallbackTop or { male = {}, female = {} }
@@ -87,6 +88,21 @@ end)
 exports('GetFallbackTopForInnershirt', function(gender, innershirtDrawable)
     local m = map and map.innershirtToFallbackTop[gender] or nil
     return m and m[innershirtDrawable] or nil
+end)
+
+local function GetBareArmsForShirt(gender, shirtDrawable)
+    local m = map and map.shirts[gender] or nil
+    return m and m[shirtDrawable] or nil
+end
+exports('GetBareArmsForShirt', GetBareArmsForShirt)
+
+exports('PickShirtForRange', function(gender, range, requiredBare)
+    if not range then return nil end
+    for i = 1, #range do
+        local c = range[i]
+        if GetBareArmsForShirt(gender, c) == requiredBare then return c end
+    end
+    return nil
 end)
 
 -- ============================================================
