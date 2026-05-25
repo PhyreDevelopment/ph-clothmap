@@ -162,6 +162,41 @@ local function serialiseMap(m)
 end
 
 -- ============================================================
+-- Normalisation: NUI JSON serialises numeric keys as strings
+-- ("16" instead of 16). Coerce them back so the validator and
+-- serialiser see the expected numeric-keyed maps.
+-- ============================================================
+
+local function coerceNumberKeys(t)
+    if type(t) ~= 'table' then return t end
+    local out = {}
+    for k, v in pairs(t) do
+        local nk = type(k) == 'string' and tonumber(k) or k
+        if nk ~= nil then out[nk] = v end
+    end
+    return out
+end
+
+local function normalisePayload(p)
+    if type(p) ~= 'table' then return p end
+    for _, gender in ipairs({ 'male', 'female' }) do
+        if p.gloves and p.gloves[gender] then
+            p.gloves[gender] = coerceNumberKeys(p.gloves[gender])
+        end
+        if p.tops and p.tops[gender] then
+            p.tops[gender] = coerceNumberKeys(p.tops[gender])
+        end
+        if p.jacketToArms and p.jacketToArms[gender] then
+            p.jacketToArms[gender] = coerceNumberKeys(p.jacketToArms[gender])
+        end
+        if p.innershirtToFallbackTop and p.innershirtToFallbackTop[gender] then
+            p.innershirtToFallbackTop[gender] = coerceNumberKeys(p.innershirtToFallbackTop[gender])
+        end
+    end
+    return p
+end
+
+-- ============================================================
 -- Shape validation
 -- ============================================================
 
@@ -214,6 +249,8 @@ lib.callback.register('clothmap:server:saveMap', function(source, payload)
     if not IsPlayerAceAllowed(source, 'command.clothmap') then
         return { ok = false, error = 'permission' }
     end
+
+    payload = normalisePayload(payload)
 
     local ok, where = validatePayload(payload)
     if not ok then
