@@ -22,6 +22,11 @@ export function useClothMap() {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const close = useCallback(() => {
+    setVisible(false);
+    post('clothmap:close');
+  }, []);
+
   useEffect(() => {
     Nui.startNuiListener();
     Nui.onEvent('clothmap:open', (payload: { map: ClothMap; gender: Gender }) => {
@@ -32,13 +37,11 @@ export function useClothMap() {
     Nui.onEvent('clothmap:close', () => setVisible(false));
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        post('clothmap:close').then(() => setVisible(false));
-      }
+      if (e.key === 'Escape') close();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [close]);
 
   const setGender = useCallback((g: Gender) => {
     setGenderState(g);
@@ -332,6 +335,7 @@ export function useClothMap() {
     setFallbackTop,
     clearFallbackTop,
     save,
+    close,
   };
 }
 

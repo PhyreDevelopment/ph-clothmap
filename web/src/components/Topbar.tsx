@@ -1,7 +1,6 @@
 import styled from 'styled-components';
 import type { ClothMapStore } from '../hooks/useClothMap';
 import type { Tab, Gender } from '../types';
-import { post } from '../Nui';
 
 const Bar = styled.div`
   display: flex;
@@ -98,7 +97,7 @@ export function Topbar({ store }: Props) {
       <Btn $primary $disabled={store.saving} onClick={() => store.save()}>
         {store.saving ? 'Saving…' : 'Save'}
       </Btn>
-      <Btn onClick={() => post('clothmap:close')}>Close</Btn>
+      <Btn onClick={() => store.close()}>Close</Btn>
     </Bar>
   );
 }
