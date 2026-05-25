@@ -178,14 +178,14 @@ end
 
 local function setupCamera(ped)
     DestroyAllCams(true)
-    local coords = GetEntityCoords(ped)
-    local heading = GetEntityHeading(ped)
-    local rad = math.rad(heading)
-    local fx, fy = -math.sin(rad), math.cos(rad)
-    local camCoords = vec3(coords.x + fx * 1.6, coords.y + fy * 1.6, coords.z + 0.2)
+    -- Camera 1.6 m in front of the ped, slightly above hip height. We look
+    -- at a point offset to the ped's right so the ped renders on the LEFT
+    -- third of the frame, leaving the right side clear for the NUI panel.
+    local camCoords = GetOffsetFromEntityInWorldCoords(ped, 0.0, 1.6, 0.2)
+    local lookAt = GetOffsetFromEntityInWorldCoords(ped, 0.55, 0.0, 0.1)
     cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
     SetCamCoord(cam, camCoords.x, camCoords.y, camCoords.z)
-    PointCamAtEntity(cam, ped, 0.0, 0.0, 0.1, true)
+    PointCamAtCoord(cam, lookAt.x, lookAt.y, lookAt.z)
     SetCamFov(cam, 40.0)
     SetCamActive(cam, true)
     RenderScriptCams(true, false, 0, true, true)

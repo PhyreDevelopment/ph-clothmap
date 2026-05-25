@@ -15,9 +15,9 @@ const Shell = styled.div`
 
 const Panel = styled.div`
   margin-left: auto;
-  width: 70vw;
-  max-width: 1240px;
-  min-width: 760px;
+  width: 60vw;
+  max-width: 1100px;
+  min-width: 680px;
   background: ${(p) => p.theme.bg};
   border-left: 1px solid ${(p) => p.theme.border};
   display: flex;

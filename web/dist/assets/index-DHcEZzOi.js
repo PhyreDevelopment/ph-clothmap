@@ -340,9 +340,9 @@ Error generating stack: `+o.message+`
   pointer-events: none;
 `,ng=M.div`
   margin-left: auto;
-  width: 70vw;
-  max-width: 1240px;
-  min-width: 760px;
+  width: 60vw;
+  max-width: 1100px;
+  min-width: 680px;
   background: ${e=>e.theme.bg};
   border-left: 1px solid ${e=>e.theme.border};
   display: flex;
