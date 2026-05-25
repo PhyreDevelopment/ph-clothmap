@@ -27,7 +27,7 @@ const Row = styled.div`
   gap: 6px;
   overflow-x: auto;
   align-items: center;
-  min-height: 56px;
+  min-height: 96px;
 `;
 
 const Label = styled.div`
@@ -67,7 +67,8 @@ export function SwatchStrip({
               component={component}
               drawable={d}
               state={selected === d ? 'active' : 'neutral'}
-              size={48}
+              size={88}
+              hideId
               onClick={() => onPick(d)}
               onHover={onHover ? () => onHover(d) : undefined}
             />

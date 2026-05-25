@@ -13,6 +13,7 @@ interface Props {
   onHover?: () => void;
   star?: { on: boolean; onToggle: () => void };
   size?: number;
+  hideId?: boolean;
 }
 
 const Wrap = styled.button<{ $state: NonNullable<Props['state']>; $size: number }>`
@@ -111,6 +112,7 @@ export function DrawableTile({
   onHover,
   star,
   size = 78,
+  hideId = false,
 }: Props) {
   const [broken, setBroken] = useState(false);
   return (
@@ -130,7 +132,7 @@ export function DrawableTile({
           onError={() => setBroken(true)}
         />
       )}
-      <Id>#{drawable}</Id>
+      {hideId ? null : <Id>#{drawable}</Id>}
       {tag ? <Tag>{tag}</Tag> : null}
       {star ? (
         <Star
