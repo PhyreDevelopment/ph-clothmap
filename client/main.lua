@@ -179,10 +179,10 @@ end
 local function setupCamera(ped)
     DestroyAllCams(true)
     -- Camera 1.6 m in front of the ped, slightly above hip height. We look
-    -- at a point offset to the ped's right so the ped renders on the LEFT
-    -- third of the frame, leaving the right side clear for the NUI panel.
+    -- at a point offset to the ped's LEFT so the camera yaws right, framing
+    -- the ped on the LEFT third of the screen (panel covers the right 60%).
     local camCoords = GetOffsetFromEntityInWorldCoords(ped, 0.0, 1.6, 0.2)
-    local lookAt = GetOffsetFromEntityInWorldCoords(ped, 0.55, 0.0, 0.1)
+    local lookAt = GetOffsetFromEntityInWorldCoords(ped, -0.85, 0.0, 0.1)
     cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
     SetCamCoord(cam, camCoords.x, camCoords.y, camCoords.z)
     PointCamAtCoord(cam, lookAt.x, lookAt.y, lookAt.z)
