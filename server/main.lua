@@ -280,3 +280,24 @@ end)
 -- Allow the client to fetch the full map (used right after a save to refresh
 -- its local cache via lib.callback).
 lib.callback.register('clothmap:server:getMap', function() return map end)
+
+-- ============================================================
+-- /clothmap command (restricted → auto-requires command.clothmap ACE)
+-- ============================================================
+
+RegisterCommand('clothmap', function(source)
+    if source == 0 then
+        print('[ph-clothmap] /clothmap must be run by a player, not the console.')
+        return
+    end
+    -- Defense-in-depth: also check the ACE explicitly (restricted=true should
+    -- block before we get here, but this keeps the error message friendly if
+    -- the ACE config gets edited).
+    if not IsPlayerAceAllowed(source, 'command.clothmap') then
+        TriggerClientEvent('chat:addMessage', source, {
+            args = { '[ph-clothmap]', 'You do not have access to /clothmap.' },
+        })
+        return
+    end
+    TriggerClientEvent('clothmap:client:open', source)
+end, true)

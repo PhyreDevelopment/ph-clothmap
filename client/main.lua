@@ -235,20 +235,17 @@ end
 -- /clothmap command
 -- ============================================================
 
-RegisterCommand('clothmap', function()
+-- The /clothmap command is registered server-side with `restricted = true`,
+-- which auto-requires the `command.clothmap` ACE. The server triggers this
+-- event after the gate passes.
+RegisterNetEvent('clothmap:client:open', function()
     if active then return end
-    if not IsPlayerAceAllowed(PlayerId(), 'command.clothmap') then
-        lib.notify({ type = 'error', description = 'You do not have access to /clothmap.' })
-        return
-    end
     active = true
     snapshot = snapshotPed()
     applyFreemodeAndReset(currentGender)
     SetNuiFocus(true, true)
     SendNUIMessage({ type = 'clothmap:open', payload = { map = map, gender = currentGender } })
-end, false)
-
--- Also gate ACE server-side for security in case ACE check above is bypassed.
+end)
 
 -- ============================================================
 -- NUI callbacks
