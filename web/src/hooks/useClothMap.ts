@@ -5,6 +5,7 @@ import type { ClothMap, Gender, Tab } from '../types';
 const emptyMap = (): ClothMap => ({
   version: 0,
   empty: { shirt: 15, top: 15 },
+  defaultBare: { male: 0, female: 0 },
   bares: { male: [], female: [] },
   innershirts: { male: [], female: [] },
   gloves: { male: {}, female: {} },
@@ -125,7 +126,17 @@ export function useClothMap() {
     [gender],
   );
 
-  // ===== Bares: canonical bare-arms list =====
+  // ===== Bares: canonical bare-arms list + default =====
+  const setDefaultBare = useCallback(
+    (drawable: number) => {
+      setMap((m) => ({
+        ...m,
+        defaultBare: { ...m.defaultBare, [gender]: drawable },
+      }));
+    },
+    [gender],
+  );
+
   const toggleCanonicalBare = useCallback(
     (drawable: number) => {
       setMap((m) => {
@@ -253,6 +264,7 @@ export function useClothMap() {
     setTopMapping,
     clearTopMapping,
     toggleCanonicalBare,
+    setDefaultBare,
     toggleCanonicalInnershirt,
     setFallbackTop,
     clearFallbackTop,

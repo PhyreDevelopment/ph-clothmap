@@ -1,14 +1,22 @@
--- ph-clothmap data file (schema v5 — drops shirts map, adds empty config)
+-- ph-clothmap data file (schema v6 — adds defaultBare)
 -- Rewritten by SaveResourceFile via server callback after every successful save in /clothmap.
 -- After each capture session, commit this file to git; redeploys overwrite the resources tree.
 return {
-    version = 5,
+    version = 6,
     -- Drawable values that mean "nothing equipped" for each component on
     -- freemode peds. Edit these by hand if your ped uses different empty
     -- variants — they're picked up by consumers via GetEmptyDrawable.
     empty = {
         shirt = 15,  -- component 8
         top   = 15,  -- component 11
+    },
+    -- Fallback bare-arms used when a clothing item's range has no member
+    -- mapped to the player's naturalBare. The consumer can swap the player's
+    -- torso to this default + re-pick from the range against it.
+    -- Read via GetDefaultBare(gender).
+    defaultBare = {
+        male   = 0,
+        female = 0,
     },
     bares = {
         male   = { 0, 1, 2, 4, 5, 6, 8, 11, 12, 14, 15 },
