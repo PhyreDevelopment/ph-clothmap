@@ -1,17 +1,12 @@
 export type Gender = 'male' | 'female';
 
-export interface GroupEntry {
-  name: string;
-  members: Record<number, number>;
-}
-
 export interface ClothMap {
   version: number;
   bares: Record<Gender, number[]>;
   innershirts: Record<Gender, number[]>;
-  gloveGroups: Record<Gender, GroupEntry[]>;
+  gloves: Record<Gender, Record<number, number>>;
   jacketToArms: Record<Gender, Record<number, number>>;
-  topGroups: Record<Gender, GroupEntry[]>;
+  tops: Record<Gender, Record<number, number>>;
   innershirtToFallbackTop: Record<Gender, Record<number, number>>;
 }
 

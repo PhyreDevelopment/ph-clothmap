@@ -14,9 +14,9 @@ local function loadMap()
     map = fn()
     map.bares = map.bares or { male = {}, female = {} }
     map.innershirts = map.innershirts or { male = {}, female = {} }
-    map.gloveGroups = map.gloveGroups or { male = {}, female = {} }
+    map.gloves = map.gloves or { male = {}, female = {} }
     map.jacketToArms = map.jacketToArms or { male = {}, female = {} }
-    map.topGroups = map.topGroups or { male = {}, female = {} }
+    map.tops = map.tops or { male = {}, female = {} }
     map.innershirtToFallbackTop = map.innershirtToFallbackTop or { male = {}, female = {} }
 end
 
@@ -42,13 +42,8 @@ exports('IsBareArms', IsBareArms)
 
 local function GetBareArmsForGlove(gender, drawable)
     if IsBareArms(gender, drawable) then return drawable end
-    local groups = map and map.gloveGroups[gender] or nil
-    if not groups then return nil end
-    for i = 1, #groups do
-        local parent = groups[i].members[drawable]
-        if parent then return parent end
-    end
-    return nil
+    local m = map and map.gloves[gender] or nil
+    return m and m[drawable] or nil
 end
 exports('GetBareArmsForGlove', GetBareArmsForGlove)
 
@@ -75,13 +70,8 @@ end
 exports('IsInnershirt', IsInnershirt)
 
 local function GetInnershirtForTop(gender, drawable)
-    local groups = map and map.topGroups[gender] or nil
-    if not groups then return nil end
-    for i = 1, #groups do
-        local parent = groups[i].members[drawable]
-        if parent then return parent end
-    end
-    return nil
+    local m = map and map.tops[gender] or nil
+    return m and m[drawable] or nil
 end
 exports('GetInnershirtForTop', GetInnershirtForTop)
 

@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import styled from 'styled-components';
 import type { ClothMapStore } from '../../hooks/useClothMap';
-import { GroupsPanel } from '../GroupsPanel';
 import { SwatchStrip } from '../SwatchStrip';
 import { DrawableTile } from '../DrawableTile';
 import { DrawableScroll } from '../DrawableScroll';
@@ -9,9 +8,22 @@ import { DrawableScroll } from '../DrawableScroll';
 const TOP_RANGE = 250;
 const range = (n: number) => Array.from({ length: n }, (_, i) => i);
 
-const Row = styled.div`flex: 1; display: flex; min-height: 0;`;
-const Right = styled.div`flex: 1; display: flex; flex-direction: column; min-width: 0;`;
-
+const Wrap = styled.div`flex: 1; display: flex; flex-direction: column; min-height: 0;`;
+const Status = styled.div`
+  padding: 8px 12px;
+  font-size: 12px;
+  background: ${(p) => p.theme.surface};
+  border-bottom: 1px solid ${(p) => p.theme.border};
+  color: ${(p) => p.theme.textMuted};
+`;
+const Pill = styled.button`
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 11px;
+  border-radius: ${(p) => p.theme.radius};
+  border: 1px solid ${(p) => p.theme.borderSoft};
+  color: ${(p) => p.theme.bad};
+`;
 const Empty = styled.div`
   flex: 1;
   display: flex;
@@ -22,7 +34,6 @@ const Empty = styled.div`
   font-size: 13px;
   color: ${(p) => p.theme.textSoft};
 `;
-
 const Link = styled.button`
   color: ${(p) => p.theme.accent};
   text-decoration: underline;
@@ -30,39 +41,18 @@ const Link = styled.button`
   &:hover { color: ${(p) => p.theme.accentBright}; }
 `;
 
-const Notice = styled.div`
-  padding: 8px 12px;
-  font-size: 12px;
-  color: ${(p) => p.theme.textSoft};
-  background: ${(p) => p.theme.surface};
-  border-bottom: 1px solid ${(p) => p.theme.border};
-`;
-
 interface Props { store: ClothMapStore }
 
 export function TopsTab({ store }: Props) {
-  const { gender, map, activeTopGroup } = store;
-  const groups = map.topGroups[gender];
+  const { gender, map } = store;
   const innershirts = map.innershirts[gender];
+  const tops = map.tops[gender];
 
-  const [pendingDrawable, setPendingDrawable] = useState<number | null>(null);
-
-  const owner = useMemo(() => {
-    const m: Record<number, string> = {};
-    groups.forEach((g) => {
-      Object.keys(g.members).map(Number).forEach((d) => { m[d] = g.name; });
-    });
-    return m;
-  }, [groups]);
-
-  const activeMembers = useMemo(
-    () => groups.find((g) => g.name === activeTopGroup)?.members,
-    [groups, activeTopGroup],
-  );
+  const [selected, setSelected] = useState<number | null>(null);
 
   if (innershirts.length === 0) {
     return (
-      <Row>
+      <Wrap>
         <Empty>
           <div>
             No canonical innershirts declared yet.
@@ -72,81 +62,65 @@ export function TopsTab({ store }: Props) {
             tab and mark some drawables as canonical first.
           </div>
         </Empty>
-      </Row>
+      </Wrap>
     );
   }
 
   return (
-    <Row>
-      <GroupsPanel
-        title="Top groups"
-        groups={groups}
-        active={activeTopGroup}
-        onSelect={(n) => {
-          store.setActiveTopGroup(n);
-          const g = groups.find((x) => x.name === n);
-          if (g) {
-            const first = Object.keys(g.members).map(Number).sort((a, b) => a - b)[0];
-            if (first !== undefined) {
-              store.previewInnershirt(g.members[first]);
-              store.previewDrawable(11, first);
-            }
+    <Wrap>
+      <SwatchStrip
+        gender={gender}
+        component={8}
+        drawables={innershirts}
+        selected={selected !== null ? tops[selected] ?? null : null}
+        onPick={(innershirt) => {
+          if (selected !== null) {
+            store.setTopMapping(selected, innershirt);
+            store.previewInnershirt(innershirt);
           }
         }}
-        onAdd={() => store.addTopGroup()}
-        onRename={(o, n) => store.renameTopGroup(o, n)}
-        onRemove={(n) => store.removeTopGroup(n)}
-        emptyHint="No top groups yet — click + new"
+        onHover={(d) => store.previewInnershirt(d)}
+        label={
+          selected !== null
+            ? `Lock innershirt for top #${selected}`
+            : 'Pick a top below, then click the innershirt it sits on.'
+        }
       />
-      <Right>
-        <SwatchStrip
-          gender={gender}
-          component={8}
-          drawables={innershirts}
-          selected={null}
-          onPick={(innershirt) => {
-            if (pendingDrawable !== null && activeTopGroup) {
-              store.assignTopToActive(pendingDrawable, innershirt);
-              setPendingDrawable(null);
-            }
-          }}
-          onHover={(d) => store.previewInnershirt(d)}
-          label={
-            pendingDrawable !== null
-              ? `Pick innershirt for top #${pendingDrawable}`
-              : 'Innershirts (hover changes ped innershirt; click to lock)'
-          }
-        />
-        {!activeTopGroup ? (
-          <Notice>Select or create a top group to start assigning drawables.</Notice>
-        ) : null}
-        <DrawableScroll>
-          {range(TOP_RANGE).map((d) => {
-            const ownerName = owner[d];
-            const inActive = activeMembers && activeMembers[d] !== undefined;
-            const state = inActive ? 'active' : ownerName ? 'other' : 'neutral';
-            return (
-              <DrawableTile
-                key={d}
-                gender={gender}
-                component={11}
-                drawable={d}
-                state={state}
-                tag={ownerName && !inActive ? ownerName : inActive ? `→ inner ${activeMembers![d]}` : undefined}
-                onHover={() => store.previewDrawable(11, d)}
-                onClick={() => {
-                  if (!activeTopGroup) return;
-                  if (inActive) {
-                    store.removeTopFromActive(d);
-                    return;
-                  }
-                  setPendingDrawable(d);
-                }}
-              />
-            );
-          })}
-        </DrawableScroll>
-      </Right>
-    </Row>
+      {selected !== null ? (
+        <Status>
+          top #{selected} →{' '}
+          {tops[selected] !== undefined ? (
+            <>
+              innershirt {tops[selected]}
+              <Pill onClick={() => store.clearTopMapping(selected)}>clear</Pill>
+            </>
+          ) : (
+            <span>not set — click an innershirt above</span>
+          )}
+        </Status>
+      ) : null}
+      <DrawableScroll>
+        {range(TOP_RANGE).map((d) => {
+          const mapped = tops[d];
+          const isSel = selected === d;
+          const state = isSel ? 'active' : mapped !== undefined ? 'fallback' : 'neutral';
+          return (
+            <DrawableTile
+              key={d}
+              gender={gender}
+              component={11}
+              drawable={d}
+              state={state}
+              tag={mapped !== undefined ? `inner ${mapped}` : undefined}
+              onClick={() => {
+                setSelected(d);
+                store.previewDrawable(11, d);
+              }}
+              onHover={() => store.previewDrawable(11, d)}
+            />
+          );
+        })}
+      </DrawableScroll>
+    </Wrap>
   );
 }

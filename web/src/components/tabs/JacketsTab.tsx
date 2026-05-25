@@ -1,9 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import type { ClothMapStore } from '../../hooks/useClothMap';
 import { SwatchStrip } from '../SwatchStrip';
 import { DrawableTile } from '../DrawableTile';
 import { DrawableScroll } from '../DrawableScroll';
+
+// Drawable 15 of component 8 is the empty/invisible undershirt on freemode peds.
+// Removing the undershirt while we capture jacket->bare-arms keeps the jacket's
+// own collar/underside visible without an undershirt poking through.
+const HIDDEN_UNDERSHIRT = 15;
 
 const JACKET_RANGE = 250;
 const range = (n: number) => Array.from({ length: n }, (_, i) => i);
@@ -35,6 +40,12 @@ export function JacketsTab({ store }: Props) {
   const jacketMap = map.jacketToArms[gender];
 
   const [selected, setSelected] = useState<number | null>(null);
+
+  // Hide the undershirt for the whole time this tab is open. Re-fire on gender
+  // change since the freemode model swap resets all components to drawable 0.
+  useEffect(() => {
+    store.previewInnershirt(HIDDEN_UNDERSHIRT);
+  }, [gender, store.previewInnershirt]);
 
   return (
     <Row>
