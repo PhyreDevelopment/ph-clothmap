@@ -1,25 +1,14 @@
--- ph-clothmap data file (schema v5 — drops shirts map, adds empty config)
+-- ph-clothmap data file (schema v7 — gloves only)
 -- Rewritten by SaveResourceFile via server callback after every successful save in /clothmap.
 -- After each capture session, commit this file to git; redeploys overwrite the resources tree.
 return {
-    version = 5,
-    -- Drawable values that mean "nothing equipped" for each component on
-    -- freemode peds. Edit these by hand if your ped uses different empty
-    -- variants — they're picked up by consumers via GetEmptyDrawable.
-    empty = {
-        shirt = 15,  -- component 8
-        top   = 15,  -- component 11
-    },
+    version = 7,
     bares = {
         male   = { 0, 1, 2, 4, 5, 6, 8, 11, 12, 14, 15 },
         female = { 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 15 },
     },
-    innershirts = {
-        male   = {},
-        female = {},
-    },
-    -- gloves[gender][drawable] = bareArmsDrawable (component 3 → component 3 parent)
-    -- Seed values come from qbx_radialmenu/client/clothing.lua.
+    -- gloves[gender][drawable] = bareArmsDrawable
+    -- Seed values from qbx_radialmenu/client/clothing.lua.
     gloves = {
         male = {
             [16]=4, [17]=4, [18]=4, [19]=0, [20]=1, [21]=2, [22]=4, [23]=5, [24]=6, [25]=8,
@@ -72,18 +61,5 @@ return {
             [226]=131, [227]=153, [228]=161, [230]=229, [231]=229, [232]=229, [233]=229,
             [234]=229, [235]=229, [236]=229, [237]=229, [238]=229, [239]=229,
         },
-    },
-    jacketToArms = {
-        male   = {},
-        female = {},
-    },
-    -- tops[gender][drawable] = innershirtDrawable (component 11 → component 8 parent)
-    tops = {
-        male   = {},
-        female = {},
-    },
-    innershirtToFallbackTop = {
-        male   = {},
-        female = {},
     },
 }

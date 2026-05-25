@@ -2,10 +2,7 @@ import styled from 'styled-components';
 import { useClothMap } from './hooks/useClothMap';
 import { Topbar } from './components/Topbar';
 import { GlovesTab } from './components/tabs/GlovesTab';
-import { JacketsTab } from './components/tabs/JacketsTab';
-import { TopsTab } from './components/tabs/TopsTab';
 import { BaresTab } from './components/tabs/BaresTab';
-import { InnershirtsTab } from './components/tabs/InnershirtsTab';
 
 const Shell = styled.div`
   position: fixed;
@@ -36,10 +33,7 @@ export default function App() {
       <Panel>
         <Topbar store={store} />
         {store.tab === 'gloves' && <GlovesTab store={store} />}
-        {store.tab === 'jackets' && <JacketsTab store={store} />}
-        {store.tab === 'tops' && <TopsTab store={store} />}
         {store.tab === 'bares' && <BaresTab store={store} />}
-        {store.tab === 'innershirts' && <InnershirtsTab store={store} />}
       </Panel>
     </Shell>
   );

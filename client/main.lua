@@ -12,25 +12,19 @@ local function loadMap()
     local fn = load(chunkText, '@cloth_map.lua', 't', {})
     if not fn then return end
     map = fn()
-    map.empty = map.empty or { shirt = 15, top = 15 }
     map.bares = map.bares or { male = {}, female = {} }
-    map.innershirts = map.innershirts or { male = {}, female = {} }
     map.gloves = map.gloves or { male = {}, female = {} }
-    map.jacketToArms = map.jacketToArms or { male = {}, female = {} }
-    map.tops = map.tops or { male = {}, female = {} }
-    map.innershirtToFallbackTop = map.innershirtToFallbackTop or { male = {}, female = {} }
 end
 
 loadMap()
 
 RegisterNetEvent('clothmap:client:mapUpdated', function()
-    -- Re-fetch the authoritative map from server (it just hot-reloaded after a save).
     local fresh = lib.callback.await('clothmap:server:getMap', false)
     if fresh then map = fresh end
 end)
 
 -- ============================================================
--- Consumer-facing exports (mirror server, client-side)
+-- Consumer-facing exports
 -- ============================================================
 
 local function IsBareArms(gender, drawable)
@@ -48,11 +42,6 @@ local function GetBareArmsForGlove(gender, drawable)
 end
 exports('GetBareArmsForGlove', GetBareArmsForGlove)
 
-exports('GetBareArmsForJacket', function(gender, jacketDrawable)
-    local m = map and map.jacketToArms[gender] or nil
-    return m and m[jacketDrawable] or nil
-end)
-
 exports('PickGloveForRange', function(gender, range, requiredBare)
     if not range then return nil end
     for i = 1, #range do
@@ -62,40 +51,7 @@ exports('PickGloveForRange', function(gender, range, requiredBare)
     return nil
 end)
 
-local function IsInnershirt(gender, drawable)
-    local list = map and map.innershirts[gender] or nil
-    if not list then return false end
-    for i = 1, #list do if list[i] == drawable then return true end end
-    return false
-end
-exports('IsInnershirt', IsInnershirt)
-
-local function GetInnershirtForTop(gender, drawable)
-    local m = map and map.tops[gender] or nil
-    return m and m[drawable] or nil
-end
-exports('GetInnershirtForTop', GetInnershirtForTop)
-
-exports('PickTopForRange', function(gender, range, requiredInnershirt)
-    if not range then return nil end
-    for i = 1, #range do
-        local c = range[i]
-        if GetInnershirtForTop(gender, c) == requiredInnershirt then return c end
-    end
-    return nil
-end)
-
-exports('GetFallbackTopForInnershirt', function(gender, innershirtDrawable)
-    local m = map and map.innershirtToFallbackTop[gender] or nil
-    return m and m[innershirtDrawable] or nil
-end)
-
-exports('GetEmptyDrawable', function(component)
-    if not map then return nil end
-    if component == 8 then return map.empty.shirt end
-    if component == 11 then return map.empty.top end
-    return nil
-end)
+exports('GetClothMap', function() return map end)
 
 -- ============================================================
 -- Capture session state
@@ -148,13 +104,11 @@ end
 local function restoreFromSnapshot(snap)
     if not snap then return end
     if exports['illenium-appearance'] then
-        -- Cleanest restore: tell illenium to reload from DB.
         local ok = pcall(function()
             TriggerEvent('illenium-appearance:client:reloadSkin', true)
         end)
         if ok then return end
     end
-    -- Fallback: reapply model + components + props from snapshot.
     if loadModel(snap.model) then
         SetPlayerModel(PlayerId(), snap.model)
         SetModelAsNoLongerNeeded(snap.model)
@@ -176,9 +130,6 @@ end
 
 local function setupCamera(ped)
     DestroyAllCams(true)
-    -- Camera 2.4 m in front of the ped at chest height. We look at a point
-    -- offset to the ped's LEFT so the camera yaws right, framing the ped on
-    -- the LEFT third of the screen (panel covers the right 60%).
     local camCoords = GetOffsetFromEntityInWorldCoords(ped, 0.0, 2.4, 0.3)
     local lookAt = GetOffsetFromEntityInWorldCoords(ped, -1.1, 0.0, 0.3)
     cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
@@ -208,10 +159,7 @@ local function applyFreemodeAndReset(gender)
     SetModelAsNoLongerNeeded(hash)
     local ped = PlayerPedId()
     SetPedDefaultComponentVariation(ped)
-    -- Reset the three components we mutate so previews start clean.
     SetPedComponentVariation(ped, 3, 0, 0, 0)
-    SetPedComponentVariation(ped, 8, 0, 0, 0)
-    SetPedComponentVariation(ped, 11, 0, 0, 0)
     FreezeEntityPosition(ped, true)
     SetEntityInvincible(ped, true)
     setupCamera(ped)
@@ -230,12 +178,9 @@ local function closeSession()
 end
 
 -- ============================================================
--- /clothmap command
+-- /clothmap session open (gated server-side, see server/main.lua)
 -- ============================================================
 
--- The /clothmap command is registered server-side with `restricted = true`,
--- which auto-requires the `command.clothmap` ACE. The server triggers this
--- event after the gate passes.
 RegisterNetEvent('clothmap:client:open', function()
     if active then return end
     active = true
@@ -273,24 +218,9 @@ RegisterNUICallback('clothmap:previewBare', function(data, cb)
     cb({ ok = true })
 end)
 
-RegisterNUICallback('clothmap:previewInnershirt', function(data, cb)
-    local ped = PlayerPedId()
-    local drawable = tonumber(data and data.drawable) or 0
-    SetPedComponentVariation(ped, 8, drawable, 0, 0)
-    cb({ ok = true })
-end)
-
-RegisterNUICallback('clothmap:getNumDrawables', function(data, cb)
-    local ped = PlayerPedId()
-    local compId = tonumber(data and data.component) or 3
-    cb({ ok = true, count = GetNumberOfPedDrawableVariations(ped, compId) })
-end)
-
 RegisterNUICallback('clothmap:save', function(payload, cb)
     local response = lib.callback.await('clothmap:server:saveMap', false, payload)
     if response and response.ok then
-        -- Mirror the new map locally too (the broadcast event will also fire,
-        -- but doing it here avoids a race for our own UI).
         map = payload
         map.version = response.version
     end
@@ -302,7 +232,6 @@ RegisterNUICallback('clothmap:close', function(_, cb)
     cb({ ok = true })
 end)
 
--- Safety: if the resource stops while a session is open, restore the player.
 AddEventHandler('onResourceStop', function(name)
     if name == RESOURCE and active then closeSession() end
 end)

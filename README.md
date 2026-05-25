@@ -1,108 +1,75 @@
 # ph-clothmap
 
-In-game React NUI capture tool for FiveM clothing component relationships,
-plus runtime exports used by inventory consumers to translate equip/unequip
-events into correct ped component state.
-
-Components covered:
-- **3** (Torso/Arms): gloves and the bare-arms (skin) drawables they sit on
-- **8** (Undershirt): inert here — the player either wears one (any drawable
-  that's not `empty.shirt`) or doesn't (drawable equals `empty.shirt`)
-- **11** (Top/Jacket): two flavours — standalone jackets sitting on bare-arms,
-  or layered tops sitting on an innershirt
+In-game React NUI capture tool that maps **GTA freemode gloves to their
+bare-arms parents** (component 3). Pure data resource — no ped manipulation,
+no inventory wiring. ph-inventory (or any consumer) reads the answers via
+exports and applies them itself.
 
 Run `/clothmap` in-game (requires ACE `command.clothmap`) to capture mappings.
 **After each capture session, commit `shared/cloth_map.lua` to git.** Server
 redeploys overwrite the resources tree and will erase uncommitted work.
 
-## The `empty` config
-
-`shared/cloth_map.lua` has an `empty` block:
-
-```lua
-empty = {
-    shirt = 15,  -- component 8 drawable that means "no shirt"
-    top   = 15,  -- component 11 drawable that means "no top/jacket"
-}
-```
-
-Read via `exports['ph-clothmap']:GetEmptyDrawable(component)`. Edit by hand if
-your ped uses different empties.
-
-## Exports (read-only, both client and server)
+## Exports
 
 | Export | Returns |
 |---|---|
 | `IsBareArms(gender, drawable)` | bool |
-| `GetBareArmsForGlove(gender, drawable)` | bare-arms drawable or nil |
+| `GetBareArmsForGlove(gender, drawable)` | drawable or nil |
 | `PickGloveForRange(gender, range[], requiredBare)` | drawable or nil |
-| `GetBareArmsForJacket(gender, drawable)` | bare-arms drawable or nil |
-| `GetInnershirtForTop(gender, drawable)` | innershirt drawable or nil |
-| `PickTopForRange(gender, range[], requiredInner)` | drawable or nil |
-| `IsInnershirt(gender, drawable)` | bool (is it a canonical shirt) |
-| `GetFallbackTopForInnershirt(gender, drawable)` | fallback top or nil |
-| `GetEmptyDrawable(component)` | drawable or nil (component 8 / 11) |
-| `GetClothMap()` | the full in-memory map |
+| `GetClothMap()` | full in-memory map |
 
-## Layering model
+`gender` is `'male'` or `'female'`. `drawable` is a component-3 drawable id.
+`range` is the array of variants stored in a glove item's metadata.
 
-Bare-arms (component 3) is a property of the character — their natural skin.
-It does not change with clothes. Gloves are skin-tone-matched, so glove fit
-always resolves from the character's `naturalBare`, regardless of what shirt
-or top is currently on.
+## Consumer flow
 
-```
-   gloves (comp 3)     → bare-arms (comp 3) = character.naturalBare
-   shirts (comp 8)     → worn or not, but does not change bare-arms
-   jacket (comp 11)    → bare-arms (comp 3)  (standalone)
-   top    (comp 11)    → innershirts (comp 8) (layered)
+**Equip a glove** (player puts a glove item on):
+```lua
+local currentBare = readPlayerCurrentBare(ped, gender)  -- your inventory's job
+local picked = exports['ph-clothmap']:PickGloveForRange(
+    gender, item.metadata.range, currentBare
+)
+if picked then
+    SetPedComponentVariation(ped, 3, picked, 0, 0)
+end
 ```
 
-## Cascade reference for inventory consumers
+**Unequip a glove** (player removes the glove item — switch torso back to the
+same arm style without the glove):
+```lua
+local currentGlove = GetPedDrawableVariation(ped, 3)
+local bare = exports['ph-clothmap']:GetBareArmsForGlove(gender, currentGlove)
+if bare then
+    SetPedComponentVariation(ped, 3, bare, 0, 0)
+end
+```
 
-When the player removes a t-shirt (sets comp 8 to anything that isn't
-`empty.shirt`), the torso must stay complete with the correct gloves:
+## Capture workflow (UI)
+
+1. `/clothmap` opens the panel. Ped switches to freemode (male/female toggle in topbar).
+2. **Bares** tab: star the comp-3 drawables that are "naked arms" (no glove on them). These populate the swatch on the Gloves tab.
+3. **Gloves** tab:
+   - Click a glove tile → ped wears it.
+   - Click the bare-arms swatch that visually fits → mapping saved (`gloves[d] = bare`).
+   - Click the same tile again to toggle the glove off and compare.
+   - "clear" pill in the status bar removes a mapping.
+4. **Save** writes `shared/cloth_map.lua`, bumps `version`, hot-reloads in-memory.
+5. Commit the file.
+
+## Data file shape
 
 ```lua
-local clothmap = exports['ph-clothmap']
-local EMPTY_SHIRT = clothmap:GetEmptyDrawable(8)
-local EMPTY_TOP   = clothmap:GetEmptyDrawable(11)
-
--- After any clothing change, resolve the right component state.
--- `state` is the player's current intent: { topItem, shirtItem, gloveItem }
--- Each item carries a drawable `range` (array of comp drawables it can map to).
-local function applyState(ped, gender, state, naturalBare)
-    -- Bare-arms (the skin) never changes. Glove fit always resolves from it.
-    local bare = naturalBare
-
-    -- Comp 3: gloved variant of bare-arms, or just bare-arms.
-    if state.gloveItem then
-        local pick = clothmap:PickGloveForRange(gender, state.gloveItem.range, bare) or bare
-        SetPedComponentVariation(ped, 3, pick, 0, 0)
-    else
-        SetPedComponentVariation(ped, 3, bare, 0, 0)
-    end
-
-    -- Comp 8: shirt or empty.
-    if state.shirtItem then
-        SetPedComponentVariation(ped, 8, state.shirtItem.currentDrawable, 0, 0)
-    else
-        SetPedComponentVariation(ped, 8, EMPTY_SHIRT, 0, 0)
-    end
-
-    -- Comp 11: jacket or layered top or empty.
-    if state.topItem then
-        SetPedComponentVariation(ped, 11, state.topItem.currentDrawable, 0, 0)
-    else
-        SetPedComponentVariation(ped, 11, EMPTY_TOP, 0, 0)
-    end
-end
-
--- "Player removes the shirt" -> drop shirtItem, re-run applyState.
--- The torso (comp 3) stays on the same bare-arms and the gloves remain valid.
-state.shirtItem = nil
-applyState(ped, gender, state, naturalBare)
+return {
+    version = 7,
+    bares = {
+        male   = { 0, 1, 2, 4, 5, 6, 8, 11, 12, 14, 15 },
+        female = { 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 15 },
+    },
+    gloves = {
+        male   = { [16]=4, [17]=4, ... },  -- gloveDrawable = bareArmsDrawable
+        female = { [16]=11, [17]=3, ... },
+    },
+}
 ```
 
-`naturalBare` is the character's stored "true skin" bare-arms drawable (lives
-in your appearance system, not in this resource).
+Seed values come from `qbx_radialmenu/client/clothing.lua`.

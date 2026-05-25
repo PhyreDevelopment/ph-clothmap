@@ -4,13 +4,8 @@ import type { ClothMap, Gender, Tab } from '../types';
 
 const emptyMap = (): ClothMap => ({
   version: 0,
-  empty: { shirt: 15, top: 15 },
   bares: { male: [], female: [] },
-  innershirts: { male: [], female: [] },
   gloves: { male: {}, female: {} },
-  jacketToArms: { male: {}, female: {} },
-  tops: { male: {}, female: {} },
-  innershirtToFallbackTop: { male: {}, female: {} },
 });
 
 export function useClothMap() {
@@ -55,11 +50,7 @@ export function useClothMap() {
     post('clothmap:previewBare', { drawable });
   }, []);
 
-  const previewInnershirt = useCallback((drawable: number) => {
-    post('clothmap:previewInnershirt', { drawable });
-  }, []);
-
-  // ===== Gloves: flat map mutations =====
+  // ===== Gloves =====
   const setGloveMapping = useCallback(
     (drawable: number, bare: number) => {
       setMap((m) => ({
@@ -80,52 +71,7 @@ export function useClothMap() {
     [gender],
   );
 
-  // ===== Jackets =====
-  const setJacketArms = useCallback(
-    (jacket: number, bare: number) => {
-      setMap((m) => ({
-        ...m,
-        jacketToArms: {
-          ...m.jacketToArms,
-          [gender]: { ...m.jacketToArms[gender], [jacket]: bare },
-        },
-      }));
-    },
-    [gender],
-  );
-
-  const clearJacketArms = useCallback(
-    (jacket: number) => {
-      setMap((m) => {
-        const { [jacket]: _, ...rest } = m.jacketToArms[gender];
-        return { ...m, jacketToArms: { ...m.jacketToArms, [gender]: rest } };
-      });
-    },
-    [gender],
-  );
-
-  // ===== Tops: flat map mutations =====
-  const setTopMapping = useCallback(
-    (drawable: number, innershirt: number) => {
-      setMap((m) => ({
-        ...m,
-        tops: { ...m.tops, [gender]: { ...m.tops[gender], [drawable]: innershirt } },
-      }));
-    },
-    [gender],
-  );
-
-  const clearTopMapping = useCallback(
-    (drawable: number) => {
-      setMap((m) => {
-        const { [drawable]: _, ...rest } = m.tops[gender];
-        return { ...m, tops: { ...m.tops, [gender]: rest } };
-      });
-    },
-    [gender],
-  );
-
-  // ===== Bares: canonical bare-arms list =====
+  // ===== Bares =====
   const toggleCanonicalBare = useCallback(
     (drawable: number) => {
       setMap((m) => {
@@ -135,82 +81,18 @@ export function useClothMap() {
           ? list.filter((d) => d !== drawable)
           : [...list, drawable].sort((a, b) => a - b);
         let gloves = m.gloves[gender];
-        let jacketToArms = m.jacketToArms[gender];
         if (has) {
-          // Cascade: any glove/jacket mapped to this bare becomes orphaned. Drop them.
-          const cleanedGloves: Record<number, number> = {};
+          const cleaned: Record<number, number> = {};
           for (const k of Object.keys(gloves).map(Number)) {
-            if (gloves[k] !== drawable) cleanedGloves[k] = gloves[k];
+            if (gloves[k] !== drawable) cleaned[k] = gloves[k];
           }
-          gloves = cleanedGloves;
-          const cleanedJackets: Record<number, number> = {};
-          for (const k of Object.keys(jacketToArms).map(Number)) {
-            if (jacketToArms[k] !== drawable) cleanedJackets[k] = jacketToArms[k];
-          }
-          jacketToArms = cleanedJackets;
+          gloves = cleaned;
         }
         return {
           ...m,
           bares: { ...m.bares, [gender]: next },
           gloves: { ...m.gloves, [gender]: gloves },
-          jacketToArms: { ...m.jacketToArms, [gender]: jacketToArms },
         };
-      });
-    },
-    [gender],
-  );
-
-  // ===== Innershirts: canonicals + fallback top =====
-  const toggleCanonicalInnershirt = useCallback(
-    (drawable: number) => {
-      setMap((m) => {
-        const list = m.innershirts[gender];
-        const has = list.includes(drawable);
-        const next = has
-          ? list.filter((d) => d !== drawable)
-          : [...list, drawable].sort((a, b) => a - b);
-        let fallback = m.innershirtToFallbackTop[gender];
-        let tops = m.tops[gender];
-        if (has) {
-          if (fallback[drawable] !== undefined) {
-            const { [drawable]: _, ...rest } = fallback;
-            fallback = rest;
-          }
-          const cleaned: Record<number, number> = {};
-          for (const k of Object.keys(tops).map(Number)) {
-            if (tops[k] !== drawable) cleaned[k] = tops[k];
-          }
-          tops = cleaned;
-        }
-        return {
-          ...m,
-          innershirts: { ...m.innershirts, [gender]: next },
-          innershirtToFallbackTop: { ...m.innershirtToFallbackTop, [gender]: fallback },
-          tops: { ...m.tops, [gender]: tops },
-        };
-      });
-    },
-    [gender],
-  );
-
-  const setFallbackTop = useCallback(
-    (innershirt: number, top: number) => {
-      setMap((m) => ({
-        ...m,
-        innershirtToFallbackTop: {
-          ...m.innershirtToFallbackTop,
-          [gender]: { ...m.innershirtToFallbackTop[gender], [innershirt]: top },
-        },
-      }));
-    },
-    [gender],
-  );
-
-  const clearFallbackTop = useCallback(
-    (innershirt: number) => {
-      setMap((m) => {
-        const { [innershirt]: _, ...rest } = m.innershirtToFallbackTop[gender];
-        return { ...m, innershirtToFallbackTop: { ...m.innershirtToFallbackTop, [gender]: rest } };
       });
     },
     [gender],
@@ -245,17 +127,9 @@ export function useClothMap() {
     saving,
     previewDrawable,
     previewBare,
-    previewInnershirt,
     setGloveMapping,
     clearGloveMapping,
-    setJacketArms,
-    clearJacketArms,
-    setTopMapping,
-    clearTopMapping,
     toggleCanonicalBare,
-    toggleCanonicalInnershirt,
-    setFallbackTop,
-    clearFallbackTop,
     save,
     close,
   };
