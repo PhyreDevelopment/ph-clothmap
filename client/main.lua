@@ -178,11 +178,11 @@ end
 
 local function setupCamera(ped)
     DestroyAllCams(true)
-    -- Camera 1.6 m in front of the ped, slightly above hip height. We look
-    -- at a point offset to the ped's LEFT so the camera yaws right, framing
-    -- the ped on the LEFT third of the screen (panel covers the right 60%).
-    local camCoords = GetOffsetFromEntityInWorldCoords(ped, 0.0, 1.6, 0.2)
-    local lookAt = GetOffsetFromEntityInWorldCoords(ped, -0.85, 0.0, 0.1)
+    -- Camera 2.4 m in front of the ped at chest height. We look at a point
+    -- offset to the ped's LEFT so the camera yaws right, framing the ped on
+    -- the LEFT third of the screen (panel covers the right 60%).
+    local camCoords = GetOffsetFromEntityInWorldCoords(ped, 0.0, 2.4, 0.3)
+    local lookAt = GetOffsetFromEntityInWorldCoords(ped, -1.1, 0.0, 0.3)
     cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
     SetCamCoord(cam, camCoords.x, camCoords.y, camCoords.z)
     PointCamAtCoord(cam, lookAt.x, lookAt.y, lookAt.z)

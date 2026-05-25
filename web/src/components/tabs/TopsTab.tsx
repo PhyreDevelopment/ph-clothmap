@@ -82,7 +82,17 @@ export function TopsTab({ store }: Props) {
         title="Top groups"
         groups={groups}
         active={activeTopGroup}
-        onSelect={(n) => store.setActiveTopGroup(n)}
+        onSelect={(n) => {
+          store.setActiveTopGroup(n);
+          const g = groups.find((x) => x.name === n);
+          if (g) {
+            const first = Object.keys(g.members).map(Number).sort((a, b) => a - b)[0];
+            if (first !== undefined) {
+              store.previewInnershirt(g.members[first]);
+              store.previewDrawable(11, first);
+            }
+          }
+        }}
         onAdd={() => store.addTopGroup()}
         onRename={(o, n) => store.renameTopGroup(o, n)}
         onRemove={(n) => store.removeTopGroup(n)}

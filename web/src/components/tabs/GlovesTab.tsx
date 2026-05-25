@@ -48,7 +48,19 @@ export function GlovesTab({ store }: Props) {
         title="Glove groups"
         groups={groups}
         active={activeGloveGroup}
-        onSelect={(n) => store.setActiveGloveGroup(n)}
+        onSelect={(n) => {
+          store.setActiveGloveGroup(n);
+          // Preview the first member on the ped so the group is identifiable
+          // at a glance.
+          const g = groups.find((x) => x.name === n);
+          if (g) {
+            const first = Object.keys(g.members).map(Number).sort((a, b) => a - b)[0];
+            if (first !== undefined) {
+              store.previewBare(g.members[first]);
+              store.previewDrawable(3, first);
+            }
+          }
+        }}
         onAdd={() => store.addGloveGroup()}
         onRename={(o, n) => store.renameGloveGroup(o, n)}
         onRemove={(n) => store.removeGloveGroup(n)}
