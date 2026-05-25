@@ -11,4 +11,4 @@ export interface ClothMap {
   innershirtToFallbackTop: Record<Gender, Record<number, number>>;
 }
 
-export type Tab = 'gloves' | 'jackets' | 'tops' | 'innershirts';
+export type Tab = 'gloves' | 'jackets' | 'tops' | 'bares' | 'innershirts';
