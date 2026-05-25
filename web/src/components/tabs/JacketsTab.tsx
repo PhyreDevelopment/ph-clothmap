@@ -109,11 +109,9 @@ export function JacketsTab({ store }: Props) {
                     store.previewDrawable(11, d);
                   }
                 }}
-                onHover={() => {
-                  if (jacketVisible || selected !== d) {
-                    store.previewDrawable(11, d);
-                  }
-                }}
+                // No onHover: jackets only appear on the ped when the tile is
+                // clicked — hover-preview was noisy because every mouse move
+                // across the scroll re-clothed the ped.
               />
             );
           })}
