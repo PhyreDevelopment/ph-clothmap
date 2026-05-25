@@ -12,10 +12,10 @@ local function loadMap()
     local fn = load(chunkText, '@cloth_map.lua', 't', {})
     if not fn then return end
     map = fn()
+    map.empty = map.empty or { shirt = 15, top = 15 }
     map.bares = map.bares or { male = {}, female = {} }
     map.innershirts = map.innershirts or { male = {}, female = {} }
     map.gloves = map.gloves or { male = {}, female = {} }
-    map.shirts = map.shirts or { male = {}, female = {} }
     map.jacketToArms = map.jacketToArms or { male = {}, female = {} }
     map.tops = map.tops or { male = {}, female = {} }
     map.innershirtToFallbackTop = map.innershirtToFallbackTop or { male = {}, female = {} }
@@ -90,18 +90,10 @@ exports('GetFallbackTopForInnershirt', function(gender, innershirtDrawable)
     return m and m[innershirtDrawable] or nil
 end)
 
-local function GetBareArmsForShirt(gender, shirtDrawable)
-    local m = map and map.shirts[gender] or nil
-    return m and m[shirtDrawable] or nil
-end
-exports('GetBareArmsForShirt', GetBareArmsForShirt)
-
-exports('PickShirtForRange', function(gender, range, requiredBare)
-    if not range then return nil end
-    for i = 1, #range do
-        local c = range[i]
-        if GetBareArmsForShirt(gender, c) == requiredBare then return c end
-    end
+exports('GetEmptyDrawable', function(component)
+    if not map then return nil end
+    if component == 8 then return map.empty.shirt end
+    if component == 11 then return map.empty.top end
     return nil
 end)
 

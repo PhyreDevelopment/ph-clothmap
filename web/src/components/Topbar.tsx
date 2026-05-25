@@ -60,7 +60,6 @@ const Btn = styled.button<{ $primary?: boolean; $disabled?: boolean }>`
 
 const tabs: { key: Tab; label: string }[] = [
   { key: 'gloves', label: 'Gloves' },
-  { key: 'shirts', label: 'Shirts' },
   { key: 'jackets', label: 'Jackets' },
   { key: 'tops', label: 'Tops' },
   { key: 'innershirts', label: 'Innershirts' },

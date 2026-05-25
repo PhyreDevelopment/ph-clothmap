@@ -4,10 +4,10 @@ import type { ClothMap, Gender, Tab } from '../types';
 
 const emptyMap = (): ClothMap => ({
   version: 0,
+  empty: { shirt: 15, top: 15 },
   bares: { male: [], female: [] },
   innershirts: { male: [], female: [] },
   gloves: { male: {}, female: {} },
-  shirts: { male: {}, female: {} },
   jacketToArms: { male: {}, female: {} },
   tops: { male: {}, female: {} },
   innershirtToFallbackTop: { male: {}, female: {} },
@@ -75,27 +75,6 @@ export function useClothMap() {
       setMap((m) => {
         const { [drawable]: _, ...rest } = m.gloves[gender];
         return { ...m, gloves: { ...m.gloves, [gender]: rest } };
-      });
-    },
-    [gender],
-  );
-
-  // ===== Shirts (innershirt -> bare-arms) =====
-  const setShirtMapping = useCallback(
-    (drawable: number, bare: number) => {
-      setMap((m) => ({
-        ...m,
-        shirts: { ...m.shirts, [gender]: { ...m.shirts[gender], [drawable]: bare } },
-      }));
-    },
-    [gender],
-  );
-
-  const clearShirtMapping = useCallback(
-    (drawable: number) => {
-      setMap((m) => {
-        const { [drawable]: _, ...rest } = m.shirts[gender];
-        return { ...m, shirts: { ...m.shirts, [gender]: rest } };
       });
     },
     [gender],
@@ -234,8 +213,6 @@ export function useClothMap() {
     previewInnershirt,
     setGloveMapping,
     clearGloveMapping,
-    setShirtMapping,
-    clearShirtMapping,
     setJacketArms,
     clearJacketArms,
     setTopMapping,

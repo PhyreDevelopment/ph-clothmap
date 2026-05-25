@@ -1,8 +1,15 @@
--- ph-clothmap data file (schema v4 — adds shirts map)
+-- ph-clothmap data file (schema v5 — drops shirts map, adds empty config)
 -- Rewritten by SaveResourceFile via server callback after every successful save in /clothmap.
 -- After each capture session, commit this file to git; redeploys overwrite the resources tree.
 return {
-    version = 4,
+    version = 5,
+    -- Drawable values that mean "nothing equipped" for each component on
+    -- freemode peds. Edit these by hand if your ped uses different empty
+    -- variants — they're picked up by consumers via GetEmptyDrawable.
+    empty = {
+        shirt = 15,  -- component 8
+        top   = 15,  -- component 11
+    },
     bares = {
         male   = { 0, 1, 2, 4, 5, 6, 8, 11, 12, 14, 15 },
         female = { 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 14, 15 },
@@ -65,13 +72,6 @@ return {
             [226]=131, [227]=153, [228]=161, [230]=229, [231]=229, [232]=229, [233]=229,
             [234]=229, [235]=229, [236]=229, [237]=229, [238]=229, [239]=229,
         },
-    },
-    -- shirts[gender][drawable] = bareArmsDrawable
-    --   Innershirt (component 8) -> required bare-arms parent (component 3).
-    --   Lets a consumer reverse the chain: top -> shirt -> bare-arms -> glove fit.
-    shirts = {
-        male   = {},
-        female = {},
     },
     jacketToArms = {
         male   = {},
