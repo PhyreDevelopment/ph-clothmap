@@ -14,37 +14,6 @@ const Status = styled.div`
   background: ${(p) => p.theme.surface};
   border-bottom: 1px solid ${(p) => p.theme.border};
   color: ${(p) => p.theme.textMuted};
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-const Chip = styled.span<{ $accent?: boolean }>`
-  padding: 2px 8px;
-  border-radius: ${(p) => p.theme.radius};
-  border: 1px solid ${(p) => (p.$accent ? p.theme.accent : p.theme.borderSoft)};
-  color: ${(p) => (p.$accent ? p.theme.accent : p.theme.text)};
-  font-size: 11px;
-`;
-
-const TileWrap = styled.div`position: relative;`;
-
-const DefaultBtn = styled.button<{ $on: boolean; $canonical: boolean }>`
-  position: absolute;
-  right: 4px;
-  bottom: 4px;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.6);
-  color: ${(p) => (p.$on ? p.theme.accent : p.theme.textSoft)};
-  font-size: 13px;
-  border: 1px solid ${(p) => (p.$on ? p.theme.accent : 'transparent')};
-  opacity: ${(p) => (p.$canonical ? 1 : 0.3)};
-  pointer-events: ${(p) => (p.$canonical ? 'auto' : 'none')};
-  &:hover { color: ${(p) => p.theme.accentBright}; }
 `;
 
 interface Props { store: ClothMapStore }
@@ -52,55 +21,30 @@ interface Props { store: ClothMapStore }
 export function BaresTab({ store }: Props) {
   const { gender, map } = store;
   const bares = map.bares[gender];
-  const def = map.defaultBare[gender];
   const canonSet = useMemo(() => new Set(bares), [bares]);
 
   return (
     <Wrap>
       <Status>
-        <span>{bares.length} canonical bare-arms</span>
-        <Chip $accent>default: {def}</Chip>
-        <span style={{ flex: 1 }} />
-        <span>★ toggle canonical · ⌂ set as default · click tile to preview</span>
+        {bares.length} canonical bare-arms declared. Click a tile to preview on the ped,
+        click the ★ to add/remove from the list. Removing a bare also clears any glove or
+        jacket entry that pointed to it.
       </Status>
       <DrawableScroll>
-        {range(BARE_RANGE).map((d) => {
-          const isCanon = canonSet.has(d);
-          const isDefault = def === d;
-          const state = isDefault ? 'active' : isCanon ? 'fallback' : 'neutral';
-          return (
-            <TileWrap key={d}>
-              <DrawableTile
-                gender={gender}
-                component={3}
-                drawable={d}
-                state={state}
-                onClick={() => store.previewBare(d)}
-                star={{
-                  on: isCanon,
-                  onToggle: () => store.toggleCanonicalBare(d),
-                }}
-              />
-              <DefaultBtn
-                $on={isDefault}
-                $canonical={isCanon}
-                title={
-                  !isCanon
-                    ? 'Mark this drawable as a canonical bare first'
-                    : isDefault
-                    ? 'This is the default bare'
-                    : 'Set as default bare for this gender'
-                }
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (isCanon) store.setDefaultBare(d);
-                }}
-              >
-                ⌂
-              </DefaultBtn>
-            </TileWrap>
-          );
-        })}
+        {range(BARE_RANGE).map((d) => (
+          <DrawableTile
+            key={d}
+            gender={gender}
+            component={3}
+            drawable={d}
+            state={canonSet.has(d) ? 'fallback' : 'neutral'}
+            onClick={() => store.previewBare(d)}
+            star={{
+              on: canonSet.has(d),
+              onToggle: () => store.toggleCanonicalBare(d),
+            }}
+          />
+        ))}
       </DrawableScroll>
     </Wrap>
   );

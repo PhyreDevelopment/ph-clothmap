@@ -15,25 +15,19 @@ Run `/clothmap` in-game (requires ACE `command.clothmap`) to capture mappings.
 **After each capture session, commit `shared/cloth_map.lua` to git.** Server
 redeploys overwrite the resources tree and will erase uncommitted work.
 
-## Config blocks
+## The `empty` config
+
+`shared/cloth_map.lua` has an `empty` block:
 
 ```lua
 empty = {
     shirt = 15,  -- component 8 drawable that means "no shirt"
     top   = 15,  -- component 11 drawable that means "no top/jacket"
 }
-
-defaultBare = {
-    male   = 0,
-    female = 0,
-}
 ```
 
-- `empty` is read via `GetEmptyDrawable(component)`.
-- `defaultBare` is read via `GetDefaultBare(gender)`. It's the bare-arms
-  drawable used as the "fallback torso" when an item's range has no member
-  fitted to the player's natural bare-arms. Set it on the **Bares** tab via
-  the ⌂ button (only enabled on canonical bares).
+Read via `exports['ph-clothmap']:GetEmptyDrawable(component)`. Edit by hand if
+your ped uses different empties.
 
 ## Exports (read-only, both client and server)
 
@@ -48,20 +42,7 @@ defaultBare = {
 | `IsInnershirt(gender, drawable)` | bool (is it a canonical shirt) |
 | `GetFallbackTopForInnershirt(gender, drawable)` | fallback top or nil |
 | `GetEmptyDrawable(component)` | drawable or nil (component 8 / 11) |
-| `GetDefaultBare(gender)` | drawable |
-| `PickGloveWithFallback(gender, range, requiredBare)` | drawable, bareUsed, status |
-| `PickJacketWithFallback(gender, range, requiredBare)` | drawable, bareUsed, status |
-| `PickTopWithFallback(gender, range, requiredInner)` | drawable, innerUsed, status |
 | `GetClothMap()` | the full in-memory map |
-
-`status` returned by `*WithFallback` is `'exact'`, `'default'`, or `'mismatch'`.
-- `'exact'`: a range member matched the player's bare-arms — use as-is.
-- `'default'`: no member matched the natural bare, but one matches the
-  configured `defaultBare`. The consumer should swap the player's bare-arms
-  (comp 3) to `bareUsed` (the second return) before applying the picked
-  drawable, so the layered fit is correct.
-- `'mismatch'`: nothing matches even the default. The consumer was returned
-  `range[1]` as a last resort; it'll look off.
 
 ## Layering model
 
@@ -104,7 +85,6 @@ local function applyState(ped, gender, state, naturalBare)
 
     -- Comp 8: shirt or empty.
     if state.shirtItem then
-        -- Inventory consumer decides which drawable in the range to equip.
         SetPedComponentVariation(ped, 8, state.shirtItem.currentDrawable, 0, 0)
     else
         SetPedComponentVariation(ped, 8, EMPTY_SHIRT, 0, 0)
@@ -116,20 +96,6 @@ local function applyState(ped, gender, state, naturalBare)
     else
         SetPedComponentVariation(ped, 11, EMPTY_TOP, 0, 0)
     end
-end
-
--- Equip path with auto-fallback when no item variant fits the player's skin.
--- If the item's range has no member fitted to naturalBare, the consumer falls
--- back to defaultBare: swap the torso to defaultBare and use the matched
--- variant for that.
-local function equipJacket(ped, gender, item, naturalBare)
-    local pick, bare, status = clothmap:PickJacketWithFallback(gender, item.range, naturalBare)
-    if not pick then return end
-    if status == 'default' then
-        SetPedComponentVariation(ped, 3, bare, 0, 0)  -- torso swap
-    end
-    SetPedComponentVariation(ped, 11, pick, 0, 0)
-    -- (Re-apply gloves so they match the now-current bare.)
 end
 
 -- "Player removes the shirt" -> drop shirtItem, re-run applyState.

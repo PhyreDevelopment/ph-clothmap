@@ -13,7 +13,6 @@ local function loadMap()
     if not fn then return end
     map = fn()
     map.empty = map.empty or { shirt = 15, top = 15 }
-    map.defaultBare = map.defaultBare or { male = 0, female = 0 }
     map.bares = map.bares or { male = {}, female = {} }
     map.innershirts = map.innershirts or { male = {}, female = {} }
     map.gloves = map.gloves or { male = {}, female = {} }
@@ -96,58 +95,6 @@ exports('GetEmptyDrawable', function(component)
     if component == 8 then return map.empty.shirt end
     if component == 11 then return map.empty.top end
     return nil
-end)
-
-local function GetDefaultBare(gender)
-    return map and map.defaultBare[gender] or nil
-end
-exports('GetDefaultBare', GetDefaultBare)
-
-local function pickWithFallback(gender, range, requiredBare, lookup)
-    if not range or #range == 0 then return nil, requiredBare, nil end
-    for i = 1, #range do
-        if lookup(gender, range[i]) == requiredBare then
-            return range[i], requiredBare, 'exact'
-        end
-    end
-    local def = GetDefaultBare(gender)
-    if def ~= nil then
-        for i = 1, #range do
-            if lookup(gender, range[i]) == def then
-                return range[i], def, 'default'
-            end
-        end
-    end
-    return range[1], def, 'mismatch'
-end
-
-exports('PickGloveWithFallback', function(gender, range, requiredBare)
-    return pickWithFallback(gender, range, requiredBare, GetBareArmsForGlove)
-end)
-
-exports('PickJacketWithFallback', function(gender, range, requiredBare)
-    return pickWithFallback(gender, range, requiredBare, function(g, d)
-        return (map.jacketToArms[g] or {})[d]
-    end)
-end)
-
-exports('PickTopWithFallback', function(gender, range, requiredInner)
-    if not range or #range == 0 then return nil, requiredInner, nil end
-    for i = 1, #range do
-        if GetInnershirtForTop(gender, range[i]) == requiredInner then
-            return range[i], requiredInner, 'exact'
-        end
-    end
-    local list = map and map.innershirts[gender] or {}
-    local def = list[1]
-    if def ~= nil then
-        for i = 1, #range do
-            if GetInnershirtForTop(gender, range[i]) == def then
-                return range[i], def, 'default'
-            end
-        end
-    end
-    return range[1], def, 'mismatch'
 end)
 
 -- ============================================================

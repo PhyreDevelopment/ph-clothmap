@@ -3,7 +3,6 @@ export type Gender = 'male' | 'female';
 export interface ClothMap {
   version: number;
   empty: { shirt: number; top: number };
-  defaultBare: Record<Gender, number>;
   bares: Record<Gender, number[]>;
   innershirts: Record<Gender, number[]>;
   gloves: Record<Gender, Record<number, number>>;
